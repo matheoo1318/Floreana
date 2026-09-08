@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floreana — Taller floral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,480;0,9..144,600;1,9..144,420;1,9..144,500&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script type="module">
+  // Firebase — inicialización de la app, Analytics y Firestore
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAXkoIpWy9L2FzjvvWqqYJWJcu1BURwvvQ",
+    authDomain: "floreana-9f5ae.firebaseapp.com",
+    projectId: "floreana-9f5ae",
+    storageBucket: "floreana-9f5ae.firebasestorage.app",
+    messagingSenderId: "550676078845",
+    appId: "1:550676078845:web:a19e44b53a23f41995de94",
+    measurementId: "G-6RLH4T1VLY"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // Se exponen en window para que el script principal (no-módulo) del final
+  // de la página pueda usarlas sin reestructurar todo el archivo.
+  window.__firebase = { db, collection, addDoc, serverTimestamp };
+</script>
+<style>
+  :root{
+    --bg-deep:#1B2E22;
+    --bg-deep-2:#223B2B;
+    --ivory:#F6F1E4;
+    --ivory-2:#EFE8D6;
+    --ink:#22271D;
+    --ink-soft:#4B5142;
+    --brick:#AF5330;
+    --brick-dark:#8F421F;
+    --rose:#C98B86;
+    --sage:#8A9A7E;
+    --sand:#D9CDB0;
+    --cream-line: rgba(34,39,29,0.14);
+    --line-on-deep: rgba(246,241,228,0.22);
+    --radius-tag: 3px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ivory);
+    color:var(--ink);
+    font-family:'Karla', sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:480;
+    margin:0;
+    color:inherit;
+    letter-spacing:-0.01em;
+  }
+  a{color:inherit;}
+  img,svg{display:block;max-width:100%;}
+  button{font-family:inherit;cursor:pointer;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+  @media (max-width:640px){.wrap{padding:0 20px;}}
+
+  /* ---------- NAV ---------- */
+  header.site{
+    position:sticky;top:0;z-index:40;
+    background:rgba(246,241,228,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--cream-line);
+  }
+  .nav-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px;max-width:1180px;margin:0 auto;
+  }
+  .logo{
+    font-family:'Fraunces', serif;font-style:italic;font-weight:500;
+    font-size:1.4rem;letter-spacing:0.01em;
+  }
+  nav.links{display:flex;gap:28px;align-items:center;}
+  nav.links a{
+    text-decoration:none;font-size:0.92rem;color:var(--ink-soft);
+    border-bottom:1px solid transparent;padding-bottom:2px;
+    transition:border-color .18s ease, color .18s ease;
+  }
+  nav.links a:hover{color:var(--brick);border-color:var(--brick);}
+  .cart-chip{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--ink);border-radius:999px;
+    padding:7px 14px 7px 10px;font-size:0.85rem;background:var(--ivory);
+  }
+  .cart-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--brick);}
+  @media (max-width:760px){ nav.links{display:none;} }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:radial-gradient(120% 140% at 78% 10%, var(--bg-deep-2) 0%, var(--bg-deep) 62%);
+    color:var(--ivory);position:relative;overflow:hidden;
+  }
+  .hero-inner{
+    max-width:1180px;margin:0 auto;padding:88px 32px 76px;
+    display:grid;grid-template-columns:1.05fr 0.95fr;gap:40px;align-items:center;
+  }
+  @media (max-width:900px){ .hero-inner{grid-template-columns:1fr;padding:64px 24px 48px;} }
+  .hero-eyebrow{
+    font-size:0.85rem;color:var(--rose);margin-bottom:18px;
+  }
+  .hero h1{
+    font-size:clamp(2.4rem, 5vw, 3.6rem);line-height:1.06;color:var(--ivory);
+    max-width:11ch;
+  }
+  .hero h1 em{font-style:italic;color:var(--rose);font-weight:420;}
+  .hero p.lede{
+    margin-top:22px;max-width:44ch;color:rgba(246,241,228,0.78);font-size:1.05rem;
+  }
+  .hero-ctas{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:13px 24px;font-size:0.94rem;border-radius:2px;border:1px solid transparent;
+    transition:transform .15s ease, background .18s ease, border-color .18s ease, color .18s ease;
+  }
+  .btn-primary{background:var(--brick);color:var(--ivory);}
+  .btn-primary:hover{background:var(--brick-dark);}
+  .btn-ghost-deep{border-color:var(--line-on-deep);color:var(--ivory);background:transparent;}
+  .btn-ghost-deep:hover{border-color:var(--ivory);}
+  .btn-ghost{border-color:var(--ink);color:var(--ink);background:transparent;}
+  .btn-ghost:hover{background:var(--ink);color:var(--ivory);}
+  .btn:active{transform:scale(0.98);}
+
+  .hero-art{position:relative;}
+  .hero-art svg{width:100%;height:auto;}
+  .petal-anim{opacity:0;transform:translateY(10px);animation:riseIn 1s ease forwards;}
+  .petal-anim:nth-child(1){animation-delay:.05s;}
+  .petal-anim:nth-child(2){animation-delay:.18s;}
+  .petal-anim:nth-child(3){animation-delay:.30s;}
+  .petal-anim:nth-child(4){animation-delay:.42s;}
+  .petal-anim:nth-child(5){animation-delay:.52s;}
+  @keyframes riseIn{to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion: reduce){ .petal-anim{animation:none;opacity:1;transform:none;} }
+
+  /* ---------- SECTION HEADS ---------- */
+  .section{padding:96px 0;}
+  .section.tight{padding:76px 0;}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:24px;
+    margin-bottom:48px;border-bottom:1px solid var(--cream-line);padding-bottom:24px;
+  }
+  @media (max-width:640px){ .section-head{flex-direction:column;align-items:flex-start;gap:10px;} }
+  .section-head h2{font-size:clamp(1.8rem, 3vw, 2.4rem);}
+  .section-head .num{
+    font-size:0.85rem;color:var(--sage);white-space:nowrap;padding-bottom:6px;
+  }
+  .section-sub{color:var(--ink-soft);max-width:48ch;margin-top:8px;font-size:0.98rem;}
+
+  /* ---------- CATALOGO ---------- */
+  .grid-catalog{
+    display:grid;grid-template-columns:repeat(3, 1fr);gap:1px;
+    background:var(--cream-line);border:1px solid var(--cream-line);
+  }
+  @media (max-width:900px){ .grid-catalog{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .grid-catalog{grid-template-columns:1fr;} }
+  .plate{
+    background:var(--ivory);padding:30px 26px 26px;display:flex;flex-direction:column;
+  }
+  .plate-tag{font-size:0.78rem;color:var(--sage);margin-bottom:14px;}
+  .plate-art{
+    aspect-ratio:4/3.1;border:1px solid var(--cream-line);border-radius:var(--radius-tag);
+    display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+    background:var(--ivory-2);
+  }
+  .plate-art svg{width:62%;height:62%;}
+  .plate h3{font-size:1.28rem;margin-bottom:6px;}
+  .plate .desc{color:var(--ink-soft);font-size:0.92rem;flex:1;margin-bottom:16px;}
+  .plate-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    border-top:1px solid var(--cream-line);padding-top:14px;
+  }
+  .price{font-family:'Fraunces', serif;font-size:1.2rem;color:var(--brick-dark);}
+  .btn-pick{
+    font-size:0.84rem;padding:9px 16px;border:1px solid var(--ink);border-radius:999px;
+    background:transparent;transition:background .18s ease, color .18s ease;
+  }
+  .btn-pick:hover{background:var(--ink);color:var(--ivory);}
+  .btn-pick.picked{background:var(--brick);border-color:var(--brick);color:var(--ivory);}
+
+  /* ---------- PERSONALIZADO ---------- */
+  .custom-layout{
+    display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;
+  }
+  @media (max-width:900px){ .custom-layout{grid-template-columns:1fr;gap:40px;} }
+  fieldset{border:none;padding:0;margin:0 0 30px;}
+  legend{
+    font-family:'Fraunces', serif;font-size:1.02rem;margin-bottom:12px;padding:0;
+  }
+  .chip-group{display:flex;flex-wrap:wrap;gap:9px;}
+  .chip{
+    position:relative;
+  }
+  .chip input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0;}
+  .chip label{
+    display:inline-block;padding:9px 15px;border:1px solid var(--sand);border-radius:999px;
+    font-size:0.88rem;color:var(--ink-soft);transition:all .15s ease;background:var(--ivory);
+  }
+  .chip input:checked + label{
+    background:var(--ink);border-color:var(--ink);color:var(--ivory);
+  }
+  .chip input:focus-visible + label{outline:2px solid var(--brick);outline-offset:2px;}
+
+  .radio-row{display:flex;flex-direction:column;gap:9px;}
+  .radio-opt{
+    display:flex;align-items:center;gap:11px;border:1px solid var(--cream-line);
+    padding:12px 14px;border-radius:var(--radius-tag);cursor:pointer;
+  }
+  .radio-opt input{accent-color:var(--brick);width:16px;height:16px;}
+  .radio-opt .swatches{display:flex;gap:4px;margin-left:auto;}
+  .sw{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,0.12);}
+
+  .field{margin-bottom:22px;}
+  .field label.f-label{display:block;font-size:0.88rem;color:var(--ink-soft);margin-bottom:8px;}
+  textarea, input[type=text]{
+    width:100%;border:1px solid var(--sand);border-radius:var(--radius-tag);
+    padding:12px 14px;font-family:inherit;font-size:0.95rem;background:var(--ivory);color:var(--ink);
+  }
+  textarea:focus, input:focus{outline:2px solid var(--brick);outline-offset:1px;border-color:transparent;}
+  textarea{min-height:84px;resize:vertical;}
+
+  .preview-card{
+    position:sticky;top:96px;border:1px solid var(--cream-line);background:var(--ivory-2);
+    border-radius:var(--radius-tag);padding:26px;
+  }
+  .preview-frame{
+    aspect-ratio:1/1;border:1px solid var(--cream-line);background:var(--ivory);
+    border-radius:var(--radius-tag);display:flex;align-items:center;justify-content:center;
+    margin-bottom:18px;overflow:hidden;
+  }
+  #bouquetSvg{width:74%;height:74%;transition:opacity .25s ease;}
+  .preview-note{font-size:0.8rem;color:var(--sage);margin-bottom:16px;line-height:1.5;}
+  #aiText{
+    font-family:'Fraunces', serif;font-style:italic;font-size:1.02rem;color:var(--ink);
+    min-height:52px;margin-bottom:18px;line-height:1.5;
+  }
+  #aiText.placeholder{color:var(--ink-soft);font-style:normal;font-family:inherit;font-size:0.92rem;}
+  .preview-price{
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--cream-line);padding-top:16px;margin-bottom:16px;
+  }
+  .preview-price .price{font-size:1.4rem;}
+  .btn-block{width:100%;justify-content:center;}
+  .disclaimer{font-size:0.76rem;color:var(--sage);margin-top:12px;}
+
+  /* ---------- RESUMEN sticky bar ---------- */
+  .order-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:var(--ink);color:var(--ivory);
+    transform:translateY(110%);transition:transform .28s ease;
+  }
+  .order-bar.show{transform:translateY(0);}
+  .order-bar-inner{
+    max-width:1180px;margin:0 auto;padding:14px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .order-bar-info{font-size:0.9rem;}
+  .order-bar-info .name{font-family:'Fraunces', serif;font-style:italic;font-size:1.05rem;}
+  .order-bar .btn-primary{padding:11px 20px;}
+
+  /* ---------- PAGO ---------- */
+  .pay-wrap{
+    display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:start;
+  }
+  @media (max-width:900px){ .pay-wrap{grid-template-columns:1fr;} }
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--cream-line);margin-bottom:26px;}
+  .tab{
+    padding:12px 0;margin-right:28px;font-size:0.92rem;color:var(--ink-soft);
+    border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;
+  }
+  .tab.active{color:var(--ink);border-bottom-color:var(--brick);}
+  .pay-pane{display:none;}
+  .pay-pane.active{display:block;}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:520px){ .row-2{grid-template-columns:1fr;} }
+  .bank-block{
+    border:1px solid var(--cream-line);padding:18px;border-radius:var(--radius-tag);
+    font-size:0.92rem;background:var(--ivory-2);margin-bottom:14px;
+  }
+  .bank-block div{margin-bottom:6px;}
+  .bank-block .k{color:var(--ink-soft);font-size:0.8rem;}
+  .cod-note{font-size:0.92rem;color:var(--ink-soft);border:1px solid var(--cream-line);padding:16px;border-radius:var(--radius-tag);background:var(--ivory-2);}
+
+  .summary-card{
+    border:1px solid var(--cream-line);border-radius:var(--radius-tag);padding:26px;background:var(--ivory-2);
+  }
+  .summary-card h3{font-size:1.1rem;margin-bottom:18px;}
+  .sum-line{display:flex;justify-content:space-between;font-size:0.92rem;padding:9px 0;border-bottom:1px solid var(--cream-line);}
+  .sum-line.total{border-bottom:none;padding-top:14px;font-family:'Fraunces', serif;font-size:1.15rem;}
+  .empty-order{font-size:0.9rem;color:var(--ink-soft);}
+  .confirm-box{
+    display:none;margin-top:16px;border:1px solid var(--sage);background:rgba(138,154,126,0.12);
+    padding:14px 16px;border-radius:var(--radius-tag);font-size:0.88rem;
+  }
+  .confirm-box.show{display:block;}
+  .pay-disclaimer{font-size:0.78rem;color:var(--sage);margin-top:18px;line-height:1.5;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    background:var(--bg-deep);color:rgba(246,241,228,0.82);padding:60px 0 34px;
+  }
+  .foot-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:40px;margin-bottom:44px;}
+  @media (max-width:700px){ .foot-grid{grid-template-columns:1fr;gap:28px;} }
+  footer h4{font-size:0.82rem;color:var(--rose);margin-bottom:14px;font-weight:600;}
+  footer .logo{color:var(--ivory);margin-bottom:12px;}
+  footer p{font-size:0.9rem;margin:0 0 8px;color:rgba(246,241,228,0.68);}
+  footer .foot-bottom{
+    border-top:1px solid var(--line-on-deep);padding-top:22px;font-size:0.78rem;
+    color:rgba(246,241,228,0.5);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-inner">
+    <div class="logo">Floreana</div>
+    <nav class="links">
+      <a href="#catalogo">Colección</a>
+      <a href="#personalizado">A tu medida</a>
+      <a href="#pago">Pago</a>
+    </nav>
+    <div class="cart-chip"><span class="dot"></span><span id="cartChipText">Sin pedido aún</span></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">Taller floral · Urcuquí, Imbabura</div>
+      <h1>Flores compuestas a mano, para el día que lo merece</h1>
+      <p class="lede">Floreana trabaja con flor de temporada y entrega en el mismo día. Elegí un ramo de la colección o compone el tuyo, flor por flor, y mirá cómo queda antes de pedirlo.</p>
+      <div class="hero-ctas">
+        <a href="#catalogo" class="btn btn-primary">Ver colección</a>
+        <a href="#personalizado" class="btn btn-ghost-deep">Crear mi ramo</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 420 420" fill="none">
+        <g class="petal-anim" stroke="#C98B86" stroke-width="1.4">
+          <path d="M210 70 C 190 100, 190 140, 210 165 C 230 140, 230 100, 210 70 Z"/>
+        </g>
+        <g class="petal-anim" stroke="#8A9A7E" stroke-width="1.4">
+          <path d="M120 150 C 150 160, 175 190, 178 225" fill="none"/>
+          <ellipse cx="140" cy="168" rx="14" ry="7" transform="rotate(-30 140 168)"/>
+          <ellipse cx="162" cy="200" rx="14" ry="7" transform="rotate(-10 162 200)"/>
+        </g>
+        <g class="petal-anim" stroke="#F6F1E4" stroke-width="1.4">
+          <circle cx="230" cy="190" r="26"/>
+          <circle cx="230" cy="190" r="7" fill="#C98B86" stroke="none"/>
+        </g>
+        <g class="petal-anim" stroke="#D9CDB0" stroke-width="1.2">
+          <path d="M300 130 C 280 165, 280 210, 300 245" fill="none"/>
+          <ellipse cx="292" cy="150" rx="12" ry="6" transform="rotate(25 292 150)"/>
+          <ellipse cx="288" cy="190" rx="12" ry="6" transform="rotate(10 288 190)"/>
+          <ellipse cx="296" cy="225" rx="12" ry="6" transform="rotate(-15 296 225)"/>
+        </g>
+        <g class="petal-anim" stroke="#C98B86" stroke-width="1.4">
+          <path d="M150 260 C 190 300, 250 300, 290 265" fill="none"/>
+          <path d="M170 335 L 170 260" stroke="#8A9A7E"/>
+          <path d="M215 340 L 215 275" stroke="#8A9A7E"/>
+          <path d="M260 335 L 260 262" stroke="#8A9A7E"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CATALOGO ================= -->
+<section class="section" id="catalogo">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>La colección</h2>
+        <p class="section-sub">Seis composiciones fijas, disponibles para entrega el mismo día en Urcuquí y alrededores.</p>
+      </div>
+      <div class="num">6 ramos</div>
+    </div>
+
+    <div class="grid-catalog" id="catalogGrid"></div>
+  </div>
+</section>
+
+<!-- ================= PERSONALIZADO ================= -->
+<section class="section" id="personalizado" style="background:var(--ivory-2);">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>A tu medida</h2>
+        <p class="section-sub">Elegí las flores, la paleta y el tamaño. Te mostramos una vista previa antes de confirmar.</p>
+      </div>
+      <div class="num">Compone el tuyo</div>
+    </div>
+
+    <div class="custom-layout">
+      <form id="customForm" onsubmit="return false;">
+        <fieldset>
+          <legend>¿Qué flores querés incluir?</legend>
+          <div class="chip-group" id="flowerChips"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Paleta de color</legend>
+          <div class="radio-row" id="paletteOptions"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tamaño</legend>
+          <div class="chip-group" id="sizeChips"></div>
+        </fieldset>
+
+        <div class="field">
+          <label class="f-label" for="cardMsg">Mensaje para la tarjeta (opcional)</label>
+          <textarea id="cardMsg" placeholder="Ej: Feliz cumpleaños, mamá. Te quiero mucho."></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="generateBtn" type="button">Generar vista previa</button>
+      </form>
+
+      <div class="preview-card">
+        <div class="preview-frame">
+          <svg id="bouquetSvg" viewBox="0 0 300 300" fill="none"></svg>
+        </div>
+        <div class="preview-note">Vista previa generativa a partir de tus elecciones — no es una fotografía del ramo final.</div>
+        <div id="aiText" class="placeholder">Elegí al menos una flor y presioná «Generar vista previa» para ver la descripción de tu ramo.</div>
+        <div class="preview-price">
+          <span style="font-size:0.9rem;color:var(--ink-soft);">Precio estimado</span>
+          <span class="price" id="customPrice">—</span>
+        </div>
+        <button class="btn btn-ghost btn-block" id="addCustomBtn" disabled>Añadir este ramo al pedido</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAGO ================= -->
+<section class="section" id="pago">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Confirmar y pagar</h2>
+        <p class="section-sub">Elegí el medio de pago que prefieras. La entrega se coordina por WhatsApp después de confirmar.</p>
+      </div>
+      <div class="num">Último paso</div>
+    </div>
+
+    <div class="pay-wrap">
+      <div>
+        <div class="tabs">
+          <button class="tab active" data-pane="card">Tarjeta</button>
+          <button class="tab" data-pane="transfer">Transferencia</button>
+          <button class="tab" data-pane="cod">Contra entrega</button>
+        </div>
+
+        <div class="pay-pane active" id="pane-card">
+          <div class="field"><label class="f-label" for="ccName">Nombre en la tarjeta</label><input type="text" id="ccName" placeholder="Como figura en la tarjeta"></div>
+          <div class="field"><label class="f-label" for="ccNum">Número de tarjeta</label><input type="text" id="ccNum" placeholder="0000 0000 0000 0000"></div>
+          <div class="row-2">
+            <div class="field"><label class="f-label" for="ccExp">Vencimiento</label><input type="text" id="ccExp" placeholder="MM / AA"></div>
+            <div class="field"><label class="f-label" for="ccCvv">CVV</label><input type="text" id="ccCvv" placeholder="123"></div>
+          </div>
+        </div>
+
+        <div class="pay-pane" id="pane-transfer">
+          <div class="bank-block">
+            <div><span class="k">Banco</span><br>Banco Pichincha</div>
+            <div><span class="k">Cuenta de ahorros</span><br>22-1234567-8</div>
+            <div><span class="k">A nombre de</span><br>Floreana Taller Floral</div>
+          </div>
+          <div class="field"><label class="f-label" for="transferRef">Enviá el comprobante a este número o pegá la referencia</label><input type="text" id="transferRef" placeholder="Nº de comprobante o referencia"></div>
+        </div>
+
+        <div class="pay-pane" id="pane-cod">
+          <div class="cod-note">Pagás en efectivo o con datáfono al recibir tu pedido. Coordinamos el horario de entrega por WhatsApp una vez confirmado.</div>
+        </div>
+
+        <div class="field" style="margin-top:6px;">
+          <label class="f-label" for="deliveryAddress">Dirección de entrega</label>
+          <input type="text" id="deliveryAddress" placeholder="Calle, número, referencia">
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Tu pedido</h3>
+        <div id="summaryBody">
+          <p class="empty-order">Todavía no elegiste un ramo. Volvé a la colección o compone uno a tu medida.</p>
+        </div>
+        <button class="btn btn-primary btn-block" id="confirmBtn" style="margin-top:18px;" disabled>Confirmar pedido</button>
+        <div class="confirm-box" id="confirmBox">Pedido confirmado. Te escribimos por WhatsApp en los próximos minutos para coordinar la entrega.</div>
+        <div class="pay-disclaimer">Esta sección es una vista previa de interfaz de pago; no procesa transacciones reales todavía.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="order-bar" id="orderBar">
+  <div class="order-bar-inner">
+    <div class="order-bar-info">Elegiste <span class="name" id="orderBarName"></span> · <span id="orderBarPrice"></span></div>
+    <a href="#pago" class="btn btn-primary">Ir a pagar</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo">Floreana</div>
+        <p>Taller floral en Urcuquí, Imbabura. Trabajamos con flor de temporada y entregamos el mismo día.</p>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <p>WhatsApp: 099 123 4567</p>
+        <p>hola@floreana.ec</p>
+      </div>
+      <div>
+        <h4>Horario</h4>
+        <p>Martes a sábado, 9:00 – 18:00</p>
+        <p>Domingo y lunes, cerrado</p>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Floreana</span>
+      <span>Sitio de demostración</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============== DATA ============== */
+const BOUQUETS = [
+  { id:'aurora', tag:'Pieza 01', name:'Aurora', desc:'Rosas rosa pastel con eucalipto, atadas con cinta de lino.', price:32, accent:'#C98B86' },
+  { id:'tropico', tag:'Pieza 02', name:'Trópico', desc:'Girasoles y heliconias sobre follaje tropical, para dar alegría.', price:38, accent:'#AF5330' },
+  { id:'bruma', tag:'Pieza 03', name:'Bruma', desc:'Lirios blancos y gypsophila, minimal y luminoso.', price:28, accent:'#8A9A7E' },
+  { id:'ocaso', tag:'Pieza 04', name:'Ocaso', desc:'Ranúnculos y rosas coral con ramas de olivo.', price:45, accent:'#AF5330' },
+  { id:'musgo', tag:'Pieza 05', name:'Musgo', desc:'Flores silvestres y verdes variados, estilo recién cortado.', price:26, accent:'#8A9A7E' },
+  { id:'ceremonia', tag:'Pieza 06', name:'Ceremonia', desc:'Peonías y rosas blancas con eucalipto plateado. Nuestra pieza premium.', price:58, accent:'#C98B86' },
+];
+
+const FLOWERS = [
+  {id:'rosas', label:'Rosas', color:'#C98B86'},
+  {id:'peonias', label:'Peonías', color:'#D9A6A0'},
+  {id:'girasoles', label:'Girasoles', color:'#D9A23A'},
+  {id:'lirios', label:'Lirios', color:'#F3EFE2'},
+  {id:'ranunculos', label:'Ranúnculos', color:'#AF5330'},
+  {id:'gypsophila', label:'Gypsophila', color:'#EDEAE0'},
+  {id:'eucalipto', label:'Eucalipto', color:'#8A9A7E'},
+  {id:'silvestres', label:'Flores silvestres', color:'#B87A9C'},
+];
+
+const PALETTES = [
+  {id:'pastel', label:'Pastel — rosa, durazno, blanco', swatches:['#F0D3CE','#F3D9A6','#F8F4EA']},
+  {id:'vivo', label:'Vivo — naranja, fucsia, amarillo', swatches:['#D9622F','#C24B7C','#E0B23A']},
+  {id:'elegante', label:'Elegante — blanco y verde', swatches:['#F5F2E8','#8A9A7E','#3E4A34']},
+  {id:'otonal', label:'Otoñal — burdeos, mostaza, terracota', swatches:['#6E2A34','#B98A2E','#AF5330']},
+];
+
+const SIZES = [
+  {id:'pequeno', label:'Pequeño', mult:1},
+  {id:'mediano', label:'Mediano', mult:1.5},
+  {id:'grande', label:'Grande', mult:2.1},
+];
+
+let order = null; // { name, price, source }
+
+/* ============== RENDER CATALOG ============== */
+function bouquetIcon(accent){
+  return `
+  <svg viewBox="0 0 120 120" fill="none" stroke="${accent}" stroke-width="1.6">
+    <path d="M60 100 L60 62" />
+    <path d="M45 105 L52 66" />
+    <path d="M75 105 L68 66" />
+    <circle cx="60" cy="46" r="16" />
+    <circle cx="38" cy="56" r="11" />
+    <circle cx="82" cy="56" r="11" />
+    <circle cx="60" cy="46" r="3.5" fill="${accent}" stroke="none"/>
+    <circle cx="38" cy="56" r="2.5" fill="${accent}" stroke="none"/>
+    <circle cx="82" cy="56" r="2.5" fill="${accent}" stroke="none"/>
+    <path d="M20 62 C 30 68, 34 78, 30 92" stroke-width="1.2"/>
+    <path d="M100 62 C 90 68, 86 78, 90 92" stroke-width="1.2"/>
+  </svg>`;
+}
+
+function renderCatalog(){
+  const grid = document.getElementById('catalogGrid');
+  grid.innerHTML = BOUQUETS.map(b => `
+    <div class="plate">
+      <div class="plate-tag">${b.tag}</div>
+      <div class="plate-art">${bouquetIcon(b.accent)}</div>
+      <h3>${b.name}</h3>
+      <p class="desc">${b.desc}</p>
+      <div class="plate-foot">
+        <span class="price">$${b.price}</span>
+        <button class="btn-pick" data-id="${b.id}">Elegir</button>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.btn-pick').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const b = BOUQUETS.find(x=>x.id===btn.dataset.id);
+      grid.querySelectorAll('.btn-pick').forEach(x=>x.classList.remove('picked'));
+      btn.classList.add('picked');
+      setOrder({ name: b.name, price: b.price, source: 'Colección' });
+    });
+  });
+}
+
+/* ============== RENDER PERSONALIZADO CONTROLS ============== */
+function renderFlowerChips(){
+  document.getElementById('flowerChips').innerHTML = FLOWERS.map(f => `
+    <div class="chip">
+      <input type="checkbox" id="fl-${f.id}" name="flower" value="${f.id}">
+      <label for="fl-${f.id}">${f.label}</label>
+    </div>
+  `).join('');
+}
+
+function renderPaletteOptions(){
+  document.getElementById('paletteOptions').innerHTML = PALETTES.map((p,i) => `
+    <label class="radio-opt">
+      <input type="radio" name="palette" value="${p.id}" ${i===0?'checked':''}>
+      <span>${p.label}</span>
+      <span class="swatches">${p.swatches.map(s=>`<span class="sw" style="background:${s}"></span>`).join('')}</span>
+    </label>
+  `).join('');
+}
+
+function renderSizeChips(){
+  document.getElementById('sizeChips').innerHTML = SIZES.map((s,i) => `
+    <div class="chip">
+      <input type="radio" id="sz-${s.id}" name="size" value="${s.id}" ${i===1?'checked':''}>
+      <label for="sz-${s.id}">${s.label}</label>
+    </div>
+  `).join('');
+}
+
+/* ============== GENERATIVE SVG PREVIEW ============== */
+function drawBouquetPreview(selectedFlowerIds, paletteId){
+  const svg = document.getElementById('bouquetSvg');
+  const palette = PALETTES.find(p=>p.id===paletteId) || PALETTES[0];
+  const flowers = FLOWERS.filter(f=>selectedFlowerIds.includes(f.id));
+
+  if(flowers.length===0){
+    svg.innerHTML = `<circle cx="150" cy="150" r="1" opacity="0"/>`;
+    svg.style.opacity = 0.35;
+    return;
+  }
+  svg.style.opacity = 1;
+
+  const centerX = 150, baseY = 235;
+  let heads = '';
+  let stems = '';
+  const count = Math.min(flowers.length, 6);
+  const spread = 150;
+
+  for(let i=0;i<count;i++){
+    const f = flowers[i % flowers.length];
+    const t = count===1 ? 0.5 : i/(count-1);
+    const x = centerX - spread/2 + t*spread + (i%2===0?-6:6);
+    const y = 110 + Math.sin(t*Math.PI)*-22 + (i%2)*8;
+    const c = palette.swatches[i % palette.swatches.length];
+    const r = f.id==='gypsophila' ? 4 : (f.id==='girasoles' ? 15 : 12);
+
+    stems += `<path d="M${x} ${y+r-2} L${centerX} ${baseY}" stroke="#8A9A7E" stroke-width="1.2" fill="none"/>`;
+
+    if(f.id==='eucalipto'){
+      heads += `<path d="M${x-10} ${y} C ${x} ${y-14}, ${x+10} ${y-14}, ${x+18} ${y}" stroke="${c}" stroke-width="1.4" fill="none"/>`;
+      heads += `<ellipse cx="${x}" cy="${y-6}" rx="4" ry="2.4" fill="${c}" opacity="0.85"/>`;
+      heads += `<ellipse cx="${x+10}" cy="${y-8}" rx="4" ry="2.4" fill="${c}" opacity="0.85"/>`;
+    } else if(f.id==='gypsophila'){
+      for(let k=0;k<5;k++){
+        heads += `<circle cx="${x+(k-2)*6}" cy="${y-(k%2)*8}" r="2.6" fill="${c}" stroke="#22271D" stroke-width="0.3"/>`;
+      }
+    } else {
+      heads += `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="#22271D" stroke-width="0.6" opacity="0.95"/>`;
+      heads += `<circle cx="${x}" cy="${y}" r="${r*0.32}" fill="#AF5330" opacity="0.6"/>`;
+    }
+  }
+
+  const wrap = `<path d="M115 220 L100 285 L200 285 L185 220 Z" fill="#F3EFE2" stroke="#D9CDB0" stroke-width="1.2"/>`;
+
+  svg.innerHTML = stems + heads + wrap;
+}
+
+function estimatePrice(selectedFlowerIds, sizeId){
+  const base = 14 + selectedFlowerIds.length * 4.5;
+  const size = SIZES.find(s=>s.id===sizeId) || SIZES[1];
+  return Math.round(base * size.mult);
+}
+
+function getSelectedFlowers(){
+  return Array.from(document.querySelectorAll('input[name=flower]:checked')).map(el=>el.value);
+}
+function getSelectedPalette(){
+  const el = document.querySelector('input[name=palette]:checked');
+  return el ? el.value : PALETTES[0].id;
+}
+function getSelectedSize(){
+  const el = document.querySelector('input[name=size]:checked');
+  return el ? el.value : SIZES[1].id;
+}
+
+/* live-update preview as selections change (visual only, no text yet) */
+function attachLiveUpdate(){
+  document.getElementById('customForm').addEventListener('change', ()=>{
+    drawBouquetPreview(getSelectedFlowers(), getSelectedPalette());
+    const flowers = getSelectedFlowers();
+    if(flowers.length>0){
+      const price = estimatePrice(flowers, getSelectedSize());
+      document.getElementById('customPrice').textContent = '$' + price;
+    } else {
+      document.getElementById('customPrice').textContent = '—';
+    }
+  });
+}
+
+/* ============== AI DESCRIPTION (Claude API) ============== */
+async function generateDescription(flowerLabels, paletteLabel, sizeLabel, msg){
+  const prompt = `Sos redactor de un taller floral boutique llamado Floreana. Escribí una descripción breve (máximo 2 frases, tono cálido y sensorial, en español) de cómo se vería un ramo con estas características: flores: ${flowerLabels.join(', ')}; paleta de color: ${paletteLabel}; tamaño: ${sizeLabel}. ${msg ? 'El ramo incluye una tarjeta con el mensaje: "' + msg + '".' : ''} No uses comillas ni encabezados, solo el texto de la descripción.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await response.json();
+  const text = (data.content || []).map(b => b.text || '').join('').trim();
+  return text || 'Un ramo compuesto a mano con tus flores elegidas.';
+}
+
+document.getElementById('generateBtn').addEventListener('click', async ()=>{
+  const flowerIds = getSelectedFlowers();
+  const aiTextEl = document.getElementById('aiText');
+  const addBtn = document.getElementById('addCustomBtn');
+
+  if(flowerIds.length===0){
+    aiTextEl.className='placeholder';
+    aiTextEl.textContent = 'Elegí al menos una flor para generar la vista previa.';
+    return;
+  }
+
+  const paletteId = getSelectedPalette();
+  const sizeId = getSelectedSize();
+  const flowerLabels = FLOWERS.filter(f=>flowerIds.includes(f.id)).map(f=>f.label);
+  const paletteLabel = PALETTES.find(p=>p.id===paletteId).label;
+  const sizeLabel = SIZES.find(s=>s.id===sizeId).label;
+  const msg = document.getElementById('cardMsg').value.trim();
+  const price = estimatePrice(flowerIds, sizeId);
+
+  drawBouquetPreview(flowerIds, paletteId);
+  document.getElementById('customPrice').textContent = '$' + price;
+
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = 'Generando…';
+  btn.disabled = true;
+  aiTextEl.className='';
+  aiTextEl.textContent = 'Componiendo la descripción de tu ramo…';
+
+  try{
+    const desc = await generateDescription(flowerLabels, paletteLabel, sizeLabel, msg);
+    aiTextEl.textContent = desc;
+  }catch(e){
+    aiTextEl.className='placeholder';
+    aiTextEl.textContent = 'No pudimos generar la descripción en este momento. La vista previa visual y el precio ya están listos, podés intentar de nuevo.';
+  }
+  btn.textContent = 'Generar vista previa';
+  btn.disabled = false;
+  addBtn.disabled = false;
+
+  addBtn.onclick = ()=>{
+    setOrder({ name: 'Ramo personalizado (' + flowerLabels.slice(0,2).join(', ') + (flowerLabels.length>2?'…':'') + ')', price, source: 'A tu medida' });
+  };
+});
+
+/* ============== ORDER / SUMMARY / PAYMENT ============== */
+function setOrder(o){
+  order = o;
+  document.getElementById('cartChipText').textContent = o.name + ' · $' + o.price;
+
+  const bar = document.getElementById('orderBar');
+  document.getElementById('orderBarName').textContent = o.name;
+  document.getElementById('orderBarPrice').textContent = '$' + o.price;
+  bar.classList.add('show');
+
+  const delivery = 3;
+  const total = o.price + delivery;
+  document.getElementById('summaryBody').innerHTML = `
+    <div class="sum-line"><span>${o.name}</span><span>$${o.price}</span></div>
+    <div class="sum-line"><span>Entrega en Urcuquí</span><span>$${delivery}</span></div>
+    <div class="sum-line total"><span>Total</span><span>$${total}</span></div>
+  `;
+  document.getElementById('confirmBtn').disabled = false;
+  document.getElementById('confirmBox').classList.remove('show');
+}
+
+const PAYMENT_LABELS = { card: 'Tarjeta', transfer: 'Transferencia', cod: 'Contra entrega' };
+let currentPaymentMethod = 'card';
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.pay-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-'+tab.dataset.pane).classList.add('active');
+    currentPaymentMethod = tab.dataset.pane;
+  });
+});
+
+document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+  const confirmBtn = document.getElementById('confirmBtn');
+  const confirmBox = document.getElementById('confirmBox');
+  const address = document.getElementById('deliveryAddress').value.trim();
+
+  if(!order){
+    confirmBox.className = 'confirm-box show';
+    confirmBox.style.borderColor = '#AF5330';
+    confirmBox.textContent = 'Elegí un ramo antes de confirmar el pedido.';
+    return;
+  }
+  if(!address){
+    confirmBox.className = 'confirm-box show';
+    confirmBox.style.borderColor = '#AF5330';
+    confirmBox.textContent = 'Ingresá una dirección de entrega antes de confirmar.';
+    return;
+  }
+
+  const delivery = 3;
+  const total = order.price + delivery;
+
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Guardando pedido…';
+
+  try{
+    const { db, collection, addDoc, serverTimestamp } = window.__firebase;
+    await addDoc(collection(db, 'pedidos'), {
+      ramo: order.name,
+      origen: order.source,
+      precioRamo: order.price,
+      costoEntrega: delivery,
+      precioTotal: total,
+      metodoPago: PAYMENT_LABELS[currentPaymentMethod] || currentPaymentMethod,
+      direccionEntrega: address,
+      creadoEn: serverTimestamp()
+    });
+
+    confirmBox.style.borderColor = '';
+    confirmBox.className = 'confirm-box show';
+    confirmBox.textContent = 'Pedido confirmado y guardado. Te escribimos por WhatsApp en los próximos minutos para coordinar la entrega.';
+  }catch(err){
+    console.error('Error al guardar el pedido en Firestore:', err);
+    confirmBox.className = 'confirm-box show';
+    confirmBox.style.borderColor = '#AF5330';
+    confirmBox.textContent = 'No pudimos guardar tu pedido. Intentá de nuevo en unos segundos.';
+  }finally{
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirmar pedido';
+  }
+});
+
+/* ============== INIT ============== */
+renderCatalog();
+renderFlowerChips();
+renderPaletteOptions();
+renderSizeChips();
+attachLiveUpdate();
+drawBouquetPreview([], PALETTES[0].id);
+</script>
+</body>
+</html>
